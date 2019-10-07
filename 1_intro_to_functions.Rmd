@@ -1,0 +1,197 @@
+---
+title: "Working with USGS Data and Functions"
+author: "Matthew Ross"
+date: "10/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dataRetrieval)
+library(dygraphs) #Time series plotting
+library(tidyr) 
+library(xts) #Time series objects
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Download USGS data using dataRetrieval
+
+
+## Non function oriented method
+
+```{r,eval=F}
+lincoln_q <- readNWISdv('06752260', parameterCd = '00060',
+                        startDate = '1975-10-01',endDate = '2019-10-01') %>%
+  rename(q_cfs = X_00060_00003,
+         q_cd = X_00060_00003_cd) %>%
+  mutate(site = 'lincoln')
+
+#summary(lincoln_q)
+
+elc_q <- readNWISdv('06752280', parameterCd = '00060',
+                        startDate = '1975-10-01',endDate = '2019-10-01') %>%
+  rename(q_cfs = X_00060_00003,
+         q_cd = X_00060_00003_cd) %>%
+  mutate(site = 'elc')
+
+
+combo_data <- bind_rows(lincoln_q,elc_q)
+summary(combo_data)
+#summary(elc_q)
+```
+
+
+## Function oriented method
+
+
+```{r}
+
+q_downloader <- function(site_no = '06752260',
+                         site_id = 'lincoln'){
+  df <- readNWISdv(site_no, 
+                   parameterCd = '00060',
+                   startDate = '1950-10-01',
+                   endDate = '2019-10-01') %>%
+  rename(q_cfs = X_00060_00003,
+         q_cd = X_00060_00003_cd) %>%
+    mutate(site = site_id)
+  return(df)
+}
+
+
+lincoln_q <- q_downloader(site_no = '06752260',
+                          site_id = 'lincoln')
+elc_q <- q_downloader(site_no = '06752280',
+                      site_id = 'elc')
+#
+combo_data <- bind_rows(lincoln_q,elc_q)
+
+summary(combo_data)
+```
+
+
+## Plot the discharge data
+
+### Time series (xaxis = date)
+
+```{r}
+
+ggplot(combo_data,aes(x=Date,y=q_cfs,color=site)) + 
+  geom_line() 
+
+
+```
+
+### Density plot 
+
+```{r}
+ggplot(combo_data,aes(x=q_cfs,color=site)) +
+  geom_density() +
+  scale_x_log10()
+
+```
+
+
+### Interactive graphs 
+
+```{r,eval=F}
+#Structore examination
+#str(combo_data)
+wide_data <- combo_data %>%
+  select(-agency_cd,-site_no,-q_cd) %>%
+  spread(key=site,value=q_cfs)
+
+wide_xts <- xts(wide_data %>%
+                  select(elc,lincoln),
+                order.by = wide_data$Date)
+
+dygraph(wide_xts)
+```
+
+
+### Function for interactive graph
+
+```{r}
+
+xts_maker <- function(df){
+  wide_data <- df %>%
+    select(-agency_cd,-site_no,-q_cd) %>%
+    spread(key=site,value = q_cfs)
+
+  wide_xts <- xts(wide_data %>%
+                  select(-Date),
+                order.by = wide_data$Date)
+  
+  return(wide_xts)
+  
+}
+
+
+wide_xts <- xts_maker(combo_data)
+wide_elc <- xts_maker(elc_q)
+
+
+dygraph(wide_xts)
+dygraph(wide_elc)
+```
+
+
+# In class work
+
+## Write a function that makes ggplot time series graph of discharge
+
+Here I want you to write your own function that adds custom 
+themes to your normal ggplot call (so you don't have to write
+out theme_few and theme(legend.position = ...)) over and over again. You may need to load the library `ggthemes`. 
+
+This function call should generate a clean time series plot 
+with a single command and a single option (which data frame to 
+plot). Please plot the `combo_data` dataset here.
+
+
+```{r}
+
+```
+
+
+## Download discharge data
+
+Here I want you to download data from any 2 other USGS site in the world using the `q_downloader` function we already wrote. If this 
+function works, great! If not, you will need to investigate why? 
+Even if your function call works, why is my function "brittle?"
+
+Hint: hardcoding `q_cfs = X_00060_00003` could be dangerous
+
+```{r}
+
+```
+
+
+## Joining your two datasets
+
+Above, I combined datasets by stacking them on top of each other 
+(bind_rows), but then we had to `spread` the data anyways because
+`xts` and `dygraphs` prefer wide datasets. Here I want you 
+to write a function that joins your two USGS datasets by calling one of the family of `dplyr::join`. 
+
+Hint: be careful of having two `site` columns. 
+
+```{r}
+
+```
+
+
+## Plotting the data
+
+My function above `xts_maker` merely preps the data for plotting 
+a dygraph. Here, I want you to make a similar function that preps *and* plots a dygraph of your joined data. 
+
+
+```{r}
+
+```
+
+
