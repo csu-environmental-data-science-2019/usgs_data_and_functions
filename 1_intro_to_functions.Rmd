@@ -15,12 +15,12 @@ library(xts) #Time series objects
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Working with USGS data
+
+## Download USGS data using dataRetrieval
 
 
-# Download USGS data using dataRetrieval
-
-
-## Non function oriented method
+### Non function oriented method
 
 ```{r,eval=F}
 lincoln_q <- readNWISdv('06752260', parameterCd = '00060',
@@ -44,7 +44,7 @@ summary(combo_data)
 ```
 
 
-## Function oriented method
+### Function oriented method
 
 
 ```{r}
