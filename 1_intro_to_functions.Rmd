@@ -191,7 +191,7 @@ joiner <- function(df1,df2,qname1,qname2){
   return(df)
 }
 
-joined_df <- joiner(lincoln_q,elc_q,'lincoln','elc')
+joined_df <- joiner(lincoln_q,elc_q,'lincoln_q','elc_q')
 
 
 ```
