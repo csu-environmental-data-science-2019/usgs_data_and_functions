@@ -180,6 +180,19 @@ to write a function that joins your two USGS datasets by calling one of the fami
 Hint: be careful of having two `site` columns. 
 
 ```{r}
+joiner <- function(df1,df2,qname1,qname2){
+  df <- inner_join(df1 %>% 
+                     select(Date,q_cfs),
+                   df2 %>% 
+                     select(Date,q_cfs),by="Date") %>%
+    rename(!!qname1 := 2, #Crazy rlang::tidyeval stuff I didn't want to get into
+           !!qname2 := 3) %>% #Same
+    as_tibble()
+  return(df)
+}
+
+joined_df <- joiner(lincoln_q,elc_q,'lincoln','elc')
+
 
 ```
 
