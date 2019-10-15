@@ -15,7 +15,8 @@ library(lubridate)
 library(dataRetrieval)
 library(xts)
 library(dygraphs)
-
+library(trend)
+library(broom)
 
 ```
 
@@ -165,20 +166,41 @@ baseflower <- function(df){
 
 bq_area_nest <- bq_area %>%
   group_by(site_no) %>%
-  nest() 
+  nest() %>%
   mutate(base_data = map(data,baseflower)) %>%
   unnest(data,base_data)
 
-bq_area_nest %>%
-  filter(site_no == sites[3]) %>%
-  unnest(data)
+
+names(bq_area_nest)
+```
+
+
+
+## Trends in baseflow
+
+```{r}
+
+custom_mk <- function(df){
+  test_results <- mk.test(df$q_base)
+  return(test_results)
+}
+
+bq_trends <- bq_area_nest %>%
+  group_by(site_no) %>%
+  nest() %>%
+  mutate(mk_models = map(data,custom_mk)) %>%
+  mutate(tidy_mk = map(mk_models,broom::tidy)) %>%
+  unnest(tidy_mk)
+
+
+
 
 
 ```
 
 
 
-## Trends in baseflow
+## Extracting sens slope
 
 ```{r}
 
