@@ -185,7 +185,7 @@ custom_mk <- function(df){
   return(test_results)
 }
 
-bq_trends <- bq_area_nest %>%
+bq_trends_mk <- bq_area_nest %>%
   group_by(site_no) %>%
   nest() %>%
   mutate(mk_models = map(data,custom_mk)) %>%
@@ -204,6 +204,41 @@ bq_trends <- bq_area_nest %>%
 
 ```{r}
 
+custom_sens <- function(df){
+  test_results <- sens.slope(df$q_base)
+  
+  return(test_results)
+}
+
+sens_slope_extractor <- function(sens_models){
+  slope = sens_models$estimates
+  return(slope)
+}
+
+ 
+bq_trends_sens <- bq_area_nest %>%
+  group_by(site_no) %>%
+  nest() %>%
+  mutate(mk_models = map(data,custom_mk)) %>%
+  mutate(tidy_mk = map(mk_models,broom::tidy)) %>%
+  mutate(sens_models = map(data,custom_sens)) 
+  
+# Testing
+# test1 <- bq_trends_sens %>%
+#   slice(2) %>%
+#   pull(sens_models)
+#  
+# str(test1)
+# sens_slope_extractor(test1)
+
+bq_sens_tidy <- bq_trends_sens %>%
+  mutate(sens_slope = map(sens_models,sens_slope_extractor)) %>%
+  mutate(tidy_sens = map(sens_models,broom::tidy))
+
+
+bq_sens_tidy %>%
+  unnest(tidy_mk,tidy_sens,sens_slope) %>%
+  View()
 
 
 ```
